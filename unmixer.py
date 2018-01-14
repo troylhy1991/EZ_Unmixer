@@ -235,6 +235,7 @@ class Unmixer(QMainWindow):
         self.image16_leak_update[self.image16_leak_update<0] = 0
 
         self.image8_leak_org = self.img16to8(self.image16_leak_update)
+        self.image8_leak_update = self.image8_leak_org
         self.image_leak.refreshImage(self.image8_leak_org)
 
     ########################################## In and Out ###########################################
