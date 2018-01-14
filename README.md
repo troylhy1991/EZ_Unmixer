@@ -1,5 +1,7 @@
 # EZ_Unmixer
 
+![EZ_Unmixer Demo](https://github.com/troylhy1991/EZ_Unmixer/EZ_Unmixer_Demo.gif)
+
 1. EZ_Unmixer is a tool for quick spectal unmixing of two channel images.
 
       Master channel: the dominant channel (Left Image Panel)
