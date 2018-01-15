@@ -166,7 +166,8 @@ class Unmixer(QMainWindow):
     def saveUnmixedImage(self):
         name = QFileDialog.getSaveFileName(self, 'Save Unmixed Image')
         name = str(name)
-        tiff.imsave(name, self.image16_leak_update)
+        output = np.array(self.image16_leak_update, dtype = np.uint16)
+        tiff.imsave(name, output)
 
 
     def adjustContrastBrightness(self):
