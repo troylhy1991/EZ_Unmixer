@@ -11,6 +11,8 @@ from PyQt4.QtCore import *
 from adjust import *
 from imagePanel import *
 from table import *
+from popup import *
+
 
 
 class Unmixer(QMainWindow):
@@ -76,6 +78,9 @@ class Unmixer(QMainWindow):
         leakRatioAction = QAction('Spectral Leakage Ratio',self)
         leakRatioAction.triggered.connect(self.leakRatio)
 
+        setLeakRatioAction = QAction('Set Leakage Ratio', self)
+        setLeakRatioAction.triggered.connect(self.setLeakRatio)
+
         adjustAction = QAction('Contrast/Brightness', self)
         adjustAction.triggered.connect(self.adjustContrastBrightness)
 
@@ -92,6 +97,7 @@ class Unmixer(QMainWindow):
         unmixAction.triggered.connect(self.unmix)
 
         opsMenu.addAction(leakRatioAction)
+        opsMenu.addAction(setLeakRatioAction)
         opsMenu.addAction(adjustAction)
         opsMenu.addAction(viewSampleHistoryAction)
         opsMenu.addAction(resetAction)
@@ -142,6 +148,8 @@ class Unmixer(QMainWindow):
         h,w= self.image16_master_org[0].shape
         self.frames_master = len(self.image16_master_org[0])
 
+        self.image16_master_background = np.mean(np.array(self.image16_master_org[0]))
+
 
         self.image8_master_org = self.img16to8(self.image16_master_org[0])
         self.image_master.refreshImage(self.image8_master_org)
@@ -161,6 +169,7 @@ class Unmixer(QMainWindow):
         self.t = 0
 
         self.image16_leak_update = np.array(self.image16_leak_org[0])
+        self.image16_leak_background = np.mean(self.image16_leak_update)
         self.image8_leak_update = np.array(self.image8_leak_org)
 
     def saveUnmixedImage(self):
@@ -231,6 +240,17 @@ class Unmixer(QMainWindow):
         self.ratio_list = self.ratio_list[:-1]
         self.ratio = np.mean(self.ratio_list)
 
+    def setLeakRatio(self):
+        self.popup = MyPopup()
+        self.connect(self.popup, SIGNAL("SET_RATIO"), self.setRatioSlot)
+
+    def setRatioSlot(self, ratio):
+        self.ratio = ratio
+        print(ratio)
+
+        self.popup.deleteLater()
+
+
     def unmix(self):
         self.image16_leak_update = self.image16_leak_update - np.array(self.image16_master_org[0]) * self.ratio
         self.image16_leak_update[self.image16_leak_update<0] = 0
@@ -266,19 +286,23 @@ class Unmixer(QMainWindow):
         # Modify something with self.image8_leak_update    <--- self.image8_leak-org
 
         if channel == "CH_Master":
+            self.image8_master_update = self.image8_master_update.astype('int16')
             self.image8_master_update = self.image8_master_org + brightness*5
 
             self.image8_master_update[self.image8_master_update < lower] = 0
             self.image8_master_update[self.image8_master_update > upper] = 255
 
+            self.image8_master_update = self.image8_master_update.astype('uint8')
             self.image_master.refreshImage(self.image8_master_update)
 
         if channel == "CH_Leakage":
+            self.image8_leak_update = self.image8_leak_update.astype('int16')
             self.image8_leak_update = self.image8_leak_org + brightness*5
 
             self.image8_leak_update[self.image8_leak_update < lower] = 0
             self.image8_leak_update[self.image8_leak_update > upper] = 255
 
+            self.image8_leak_update = self.image8_leak_update.astype('uint8')
             self.image_leak.refreshImage(self.image8_leak_update)
 
 
@@ -383,7 +407,7 @@ class Unmixer(QMainWindow):
         intensity_leak = float(self.image16_leak_org[0][y1:y2,x1:x2].sum())/float(area)
         print("intensity master" + str(intensity_master))
         print("intensity leak" + str(intensity_leak))
-        ratio = intensity_leak/intensity_master
+        ratio = (intensity_leak-self.image16_leak_background)/(intensity_master-self.image16_master_background)
 
 
         self.area_list.append(area)
@@ -405,13 +429,27 @@ class Unmixer(QMainWindow):
         # get the maximum value of current frame
         # max --> 255; 50 --> 0; the other --> linear interpolation
         #maxvalue = max(image.flatten())
-        maxvalue = 1000
-        h, w = image.shape
-        image8 = np.zeros((h,w), dtype = np.uint8)
+        image = np.array(image)
+        maxvalue = 0.1 * np.max(image)
+        if maxvalue > 2000:
+            maxvalue = 2000
 
-        image8 = np.uint8((image - 0) * 255 / (maxvalue-0))
-        image8[image8 > 255] = 255
-        image8[image8 < 0] = 0
+        image[image>maxvalue] = maxvalue
+        # maxvalue = 2000
+        # h, w = image.shape
+        # image8 = np.zeros((h,w), dtype = np.uint8)
+
+        image0 = (image - 0) * 255.0 / (maxvalue-0)
+        image0[image0 > 255] = 255
+        image0[image0 < 0] = 0
+
+        image0 = np.array(image0)
+
+        image8 = image0.astype('uint8')
+
+        #image8 = np.uint8()
+        #image8[image8 > 255] = 255
+        #image8[image8 < 0] = 0
 
         return image8
 
