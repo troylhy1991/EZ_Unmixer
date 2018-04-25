@@ -30,4 +30,6 @@
 
 3. Follow the demo video.
 
+4. Manually set the Unmixing Ratio in Menu 'Operations/Set Leakage Ratio'
+
 
