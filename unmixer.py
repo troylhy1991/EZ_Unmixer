@@ -142,7 +142,7 @@ class Unmixer(QMainWindow):
 
     def loadMasterImage(self):
 
-        self.image_master_path = str(QFileDialog.getOpenFileName(self,"Select Master Image"))
+        self.image_master_path = str(QFileDialog.getOpenFileName(self,"Select Master Image","",'Images (*.tif)', None, QFileDialog.DontUseNativeDialog))
         self.image16_master_org = pims.open(self.image_master_path)
 
         h,w= self.image16_master_org[0].shape
@@ -157,7 +157,7 @@ class Unmixer(QMainWindow):
         self.t = 0
 
     def loadLeakImage(self):
-        self.image_leak_path = str(QFileDialog.getOpenFileName(self,"Select Leak Image"))
+        self.image_leak_path = str(QFileDialog.getOpenFileName(self,"Select Leak Image","",'Images (*.tif)', None, QFileDialog.DontUseNativeDialog))
         self.image16_leak_org = pims.open(self.image_leak_path)
 
         h,w= self.image16_leak_org[0].shape
@@ -430,7 +430,7 @@ class Unmixer(QMainWindow):
         # max --> 255; 50 --> 0; the other --> linear interpolation
         #maxvalue = max(image.flatten())
         image = np.array(image)
-        maxvalue = 0.1 * np.max(image)
+        maxvalue = 0.3 * np.max(image)
         if maxvalue > 2000:
             maxvalue = 2000
 
